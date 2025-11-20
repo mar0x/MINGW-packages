@@ -1,0 +1,58 @@
+
+_realname=gerbv
+pkgbase=mingw-w64-${_realname}
+pkgname="${MINGW_PACKAGE_PREFIX}-${_realname}"
+pkgver=2.10.0
+pkgrel=1
+pkgdesc="Gerber file viewer (mingw-w64)"
+arch=('any')
+mingw_arch=('mingw64' 'ucrt64' 'clang64' 'clangarm64')
+url="https://github.com/gerbv/gerbv"
+msys2_repository_url="https://github.com/gerbv/gerbv"
+license=('spdx:GPL-2.0-or-later')
+depends=("${MINGW_PACKAGE_PREFIX}-cc-libs")
+makedepends=("${MINGW_PACKAGE_PREFIX}-cc"
+             "${MINGW_PACKAGE_PREFIX}-autotools"
+             "${MINGW_PACKAGE_PREFIX}-make"
+             "${MINGW_PACKAGE_PREFIX}-gtkmm")
+source=("https://github.com/gerbv/gerbv/archive/refs/tags/v${pkgver}.tar.gz"
+        0001-Automated-formatting-using-clang-format.patch
+        0002-fix-Use-correct-API-for-compiling-with-gcc15.patch)
+sha256sums=('3eef8eb8a2755da8400e7a4394229475ad4cf1a2f85345720ee1da135a1aec44'
+            '682470794ca34555cd9834ce05050d891d447d9dfae97e1f0261358bab08f556'
+            '5707b409fbdd28e33ae56dbfde42b7019e8950a69768432f31c005d7661f21a0')
+
+apply_patch_with_msg() {
+  for _patch in "$@"
+  do
+    msg2 "Applying ${_patch}"
+    patch -Nbp1 -i "${srcdir}/${_patch}"
+  done
+}
+
+prepare() {
+  cd "${srcdir}/${_realname}-${pkgver}"
+
+  apply_patch_with_msg \
+    0001-Automated-formatting-using-clang-format.patch \
+    0002-fix-Use-correct-API-for-compiling-with-gcc15.patch
+}
+
+build() {
+  cd "${srcdir}/${_realname}-${pkgver}"
+
+  sh autogen.sh
+  ./configure --disable-update-desktop-database --prefix=${MINGW_PREFIX}
+
+  make
+}
+
+check() {
+  true
+}
+
+package() {
+  cd "${srcdir}/${_realname}-${pkgver}"
+
+  make install DESTDIR="${pkgdir}"
+}
